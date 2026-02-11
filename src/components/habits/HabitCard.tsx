@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, Pressable, Alert, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
 import { Habit, HabitType, Frequency } from '../../models/types';
 import { Completion } from '../../models/types';
@@ -98,7 +98,7 @@ export function HabitCard({ habit, completion, streak, onToggle, onQuantityChang
   };
 
   return (
-    <Animated.View entering={FadeIn.duration(300)}>
+    <View>
       <Pressable
         onPress={() => router.push(`/habit/${habit.id}`)}
         onLongPress={handleLongPress}
@@ -248,7 +248,7 @@ export function HabitCard({ habit, completion, streak, onToggle, onQuantityChang
           )}
         </Pressable>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 

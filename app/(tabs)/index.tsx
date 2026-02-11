@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, Alert, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,7 +44,7 @@ export default function HomeScreen() {
   const [showConfetti, setShowConfetti] = useState(false);
   const prevCompletedRef = useRef(0);
 
-  const todaysHabits = getTodaysHabits();
+  const todaysHabits = useMemo(() => getTodaysHabits(), [habits]);
   const completedCount = todaysHabits.filter(h =>
     h.type === HabitType.BOOLEAN
       ? todayCompletions.has(h.id)
@@ -54,21 +54,26 @@ export default function HomeScreen() {
   useEffect(() => {
     const today = getTodayString();
     async function loadStreaksAndSkips() {
+      const results = await Promise.all(
+        todaysHabits.map(async (habit) => {
+          const [record, skipped] = await Promise.all([
+            getStreakRecord(habit.id),
+            isDateSkipped(habit.id, today),
+          ]);
+          return { id: habit.id, streak: record?.current_streak ?? 0, skipped };
+        })
+      );
       const newStreaks: Record<string, number> = {};
       const newSkipped = new Set<string>();
-      for (const habit of todaysHabits) {
-        const record = await getStreakRecord(habit.id);
-        if (record) {
-          newStreaks[habit.id] = record.current_streak;
-        }
-        const skipped = await isDateSkipped(habit.id, today);
-        if (skipped) newSkipped.add(habit.id);
+      for (const r of results) {
+        newStreaks[r.id] = r.streak;
+        if (r.skipped) newSkipped.add(r.id);
       }
       setStreaks(newStreaks);
       setSkippedHabits(newSkipped);
     }
     loadStreaksAndSkips();
-  }, [habits, todayCompletions]);
+  }, [todaysHabits, todayCompletions]);
 
   // Sync widget data whenever completions change
   useEffect(() => {
