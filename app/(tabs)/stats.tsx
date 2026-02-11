@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useGamificationStore } from '../../src/store/gamificationStore';
 import { XPBar } from '../../src/components/gamification/XPBar';
@@ -51,7 +52,13 @@ export default function StatsScreen() {
         <XPBar totalXP={profile.totalXP} />
 
         {/* Weekly summary */}
-        <WeeklySummary />
+        <Pressable onPress={() => router.push('/weekly-review')}>
+          <WeeklySummary />
+          <View style={[styles.reviewBtn, { backgroundColor: theme.primary + '12' }]}>
+            <Text style={[styles.reviewBtnText, { color: theme.primary }]}>View Full Weekly Review</Text>
+            <MaterialCommunityIcons name="chevron-right" size={18} color={theme.primary} />
+          </View>
+        </Pressable>
 
         {/* Badges */}
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
@@ -109,5 +116,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: BADGE_GAP,
+  },
+  reviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginTop: 8,
+    gap: 4,
+  },
+  reviewBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, FlatList, StyleSheet, Alert } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, Pressable, SectionList, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -8,6 +8,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useHabitStore } from '../../src/store/habitStore';
 import { Habit, Frequency, HabitType } from '../../src/models/types';
 import { formatTime } from '../../src/utils/notifications';
+import { HABIT_CATEGORIES } from '../../src/constants/categories';
 
 const FREQUENCY_LABELS: Record<string, string> = {
   [Frequency.DAILY]: 'Every day',
@@ -17,10 +18,31 @@ const FREQUENCY_LABELS: Record<string, string> = {
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+const CATEGORY_MAP = Object.fromEntries(HABIT_CATEGORIES.map(c => [c.id, c]));
+
 export default function HabitsScreen() {
   const theme = useTheme();
   const habits = useHabitStore(s => s.habits);
   const archiveHabit = useHabitStore(s => s.archiveHabit);
+
+  const sections = useMemo(() => {
+    const active = habits.filter(h => !h.archivedAt);
+    const grouped: Record<string, Habit[]> = { __uncategorized: [] };
+    for (const cat of HABIT_CATEGORIES) grouped[cat.id] = [];
+    for (const h of active) {
+      const key = h.category && grouped[h.category] ? h.category : '__uncategorized';
+      grouped[key].push(h);
+    }
+    return Object.entries(grouped)
+      .filter(([, items]) => items.length > 0)
+      .map(([key, data]) => ({
+        key,
+        title: key === '__uncategorized' ? 'Uncategorized' : CATEGORY_MAP[key].label,
+        icon: key === '__uncategorized' ? 'tag-outline' : CATEGORY_MAP[key].icon,
+        color: key === '__uncategorized' ? theme.textTertiary : CATEGORY_MAP[key].color,
+        data,
+      }));
+  }, [habits, theme.textTertiary]);
 
   const handleArchive = (habit: Habit) => {
     Alert.alert('Archive Habit', `Archive "${habit.name}"?`, [
@@ -142,12 +164,28 @@ export default function HabitsScreen() {
         </Pressable>
       </View>
 
-      <FlatList
-        data={habits.filter(h => !h.archivedAt)}
+      <SectionList
+        sections={sections}
         renderItem={renderHabit}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons
+              name={section.icon as keyof typeof MaterialCommunityIcons.glyphMap}
+              size={16}
+              color={section.color}
+            />
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              {section.title}
+            </Text>
+            <Text style={[styles.sectionCount, { color: theme.textTertiary }]}>
+              {section.data.length}
+            </Text>
+          </View>
+        )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        stickySectionHeadersEnabled={false}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
             <MaterialCommunityIcons name="format-list-checks" size={48} color={theme.textTertiary} />
@@ -263,5 +301,21 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    flex: 1,
+  },
+  sectionCount: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

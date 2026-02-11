@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable, Alert, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,8 @@ import { HabitCard } from '../../src/components/habits/HabitCard';
 import { ProgressRing } from '../../src/components/home/ProgressRing';
 import { DailyGreeting } from '../../src/components/home/DailyGreeting';
 import { MotivationalNudge } from '../../src/components/home/MotivationalNudge';
+import { PerfectDayBanner } from '../../src/components/home/PerfectDayBanner';
+import { ConfettiCannon } from '../../src/components/ui/ConfettiCannon';
 import { EmptyState } from '../../src/components/ui/EmptyState';
 import { Habit, HabitType } from '../../src/models/types';
 import { getStreakRecord } from '../../src/db/badgeRepository';
@@ -39,6 +41,8 @@ export default function HomeScreen() {
 
   const [streaks, setStreaks] = useState<Record<string, number>>({});
   const [skippedHabits, setSkippedHabits] = useState<Set<string>>(new Set());
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevCompletedRef = useRef(0);
 
   const todaysHabits = getTodaysHabits();
   const completedCount = todaysHabits.filter(h =>
@@ -84,6 +88,16 @@ export default function HomeScreen() {
   }, [todayCompletions, todaysHabits.length, streaks]);
 
   const bestStreak = Math.max(0, ...Object.values(streaks));
+  const isPerfectDay = todaysHabits.length > 0 && completedCount === todaysHabits.length;
+
+  // Trigger confetti when all habits are completed
+  useEffect(() => {
+    if (isPerfectDay && prevCompletedRef.current < todaysHabits.length) {
+      setShowConfetti(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    prevCompletedRef.current = completedCount;
+  }, [completedCount, todaysHabits.length]);
 
   const handleArchive = useCallback((habit: Habit) => {
     Alert.alert('Archive Habit', `Archive "${habit.name}"?`, [
@@ -159,6 +173,7 @@ export default function HomeScreen() {
                 />
               </View>
             )}
+            <PerfectDayBanner visible={isPerfectDay} />
           </View>
         }
         ListEmptyComponent={
@@ -179,6 +194,9 @@ export default function HomeScreen() {
       >
         <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
       </Pressable>
+
+      {/* Confetti on perfect day */}
+      <ConfettiCannon active={showConfetti} onComplete={() => setShowConfetti(false)} />
 
       {/* Badge unlock modal */}
       {newlyUnlockedBadge && (

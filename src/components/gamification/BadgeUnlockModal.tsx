@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { Badge } from '../../models/types';
 import { useTheme } from '../../hooks/useTheme';
+import { ConfettiCannon } from '../ui/ConfettiCannon';
 
 interface BadgeUnlockModalProps {
   badge: Badge;
@@ -16,6 +17,7 @@ export function BadgeUnlockModal({ badge, onDismiss }: BadgeUnlockModalProps) {
   return (
     <Modal transparent animationType="fade" onRequestClose={onDismiss}>
       <Pressable style={styles.overlay} onPress={onDismiss}>
+        <ConfettiCannon active={true} />
         <Animated.View
           entering={ZoomIn.springify().damping(12)}
           style={[styles.modal, { backgroundColor: theme.surface }]}

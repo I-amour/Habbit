@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import Animated, { useAnimatedProps, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedProps, useAnimatedStyle, useSharedValue, withSpring, withRepeat, withTiming, withDelay } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -18,6 +18,21 @@ export function ProgressRing({ completed, total, size = 80, strokeWidth = 8 }: P
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = total > 0 ? completed / total : 0;
+  const isPerfect = progress >= 1;
+
+  const pulseScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (isPerfect) {
+      pulseScale.value = withDelay(300, withRepeat(
+        withTiming(1.08, { duration: 800 }),
+        -1,
+        true
+      ));
+    } else {
+      pulseScale.value = withTiming(1, { duration: 200 });
+    }
+  }, [isPerfect]);
 
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: withSpring(circumference * (1 - progress), {
@@ -26,8 +41,12 @@ export function ProgressRing({ completed, total, size = 80, strokeWidth = 8 }: P
     }),
   }));
 
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
+
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <Animated.View style={[styles.container, { width: size, height: size }, containerStyle]}>
       <Svg width={size} height={size}>
         {/* Background circle */}
         <Circle
@@ -53,11 +72,15 @@ export function ProgressRing({ completed, total, size = 80, strokeWidth = 8 }: P
         />
       </Svg>
       <View style={styles.textContainer}>
-        <Text style={[styles.count, { color: theme.text }]}>
-          {completed}/{total}
-        </Text>
+        {isPerfect ? (
+          <Text style={[styles.perfectIcon]}>✓</Text>
+        ) : (
+          <Text style={[styles.count, { color: theme.text }]}>
+            {completed}/{total}
+          </Text>
+        )}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -74,5 +97,9 @@ const styles = StyleSheet.create({
   count: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  perfectIcon: {
+    fontSize: 24,
+    color: '#2ECC71',
   },
 });
