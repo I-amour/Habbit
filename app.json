@@ -18,8 +18,12 @@
       "bundleIdentifier": "com.habbit.app",
       "entitlements": {
         "com.apple.security.application-groups": [
+          "group.com.habbit.shared",
           "group.com.habbit.shared"
         ]
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

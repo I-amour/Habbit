@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -6,10 +6,16 @@ import Animated, {
   useSharedValue,
   withSequence,
   withTiming,
-  runOnJS,
+  withDelay,
+  interpolateColor,
+  Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+const AnimatedIcon = Animated.createAnimatedComponent(
+  MaterialCommunityIcons as React.ComponentType<any>
+);
 
 interface HabitCheckboxProps {
   checked: boolean;
@@ -26,16 +32,13 @@ function triggerMilestoneHaptic(streak: number, wasChecked: boolean) {
   }
   const next = streak + 1;
   if (next === 30 || next === 100 || next === 365) {
-    // Major milestones: success notification + double heavy
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 150);
     setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 300);
   } else if (next === 7 || next === 14 || next === 21) {
-    // Weekly milestones: double tap
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 120);
   } else if (next >= 3) {
-    // Active streak: heavy
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
   } else {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -44,18 +47,51 @@ function triggerMilestoneHaptic(streak: number, wasChecked: boolean) {
 
 export function HabitCheckbox({ checked, color, onToggle, size = 32, streak = 0 }: HabitCheckboxProps) {
   const scale = useSharedValue(1);
+  const fill = useSharedValue(checked ? 1 : 0);
+  const checkScale = useSharedValue(checked ? 1 : 0);
+
+  useEffect(() => {
+    if (checked) {
+      fill.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.ease) });
+      checkScale.value = withDelay(
+        120,
+        withSpring(1, { damping: 12, stiffness: 200 })
+      );
+    } else {
+      checkScale.value = withTiming(0, { duration: 150 });
+      fill.value = withDelay(
+        80,
+        withTiming(0, { duration: 200, easing: Easing.in(Easing.ease) })
+      );
+    }
+  }, [checked]);
 
   const handlePress = () => {
     scale.value = withSequence(
-      withTiming(0.8, { duration: 80 }),
-      withSpring(1, { damping: 8, stiffness: 300 })
+      withTiming(0.85, { duration: 120, easing: Easing.out(Easing.ease) }),
+      withSpring(1, { damping: 10, stiffness: 200 })
     );
     triggerMilestoneHaptic(streak, checked);
     onToggle();
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
+  const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    backgroundColor: interpolateColor(
+      fill.value,
+      [0, 1],
+      ['transparent', color]
+    ),
+    borderColor: interpolateColor(
+      fill.value,
+      [0, 1],
+      ['#D1D5DB', color]
+    ),
+  }));
+
+  const checkStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkScale.value }],
+    opacity: checkScale.value,
   }));
 
   return (
@@ -67,15 +103,13 @@ export function HabitCheckbox({ checked, color, onToggle, size = 32, streak = 0 
             width: size,
             height: size,
             borderRadius: size / 2,
-            backgroundColor: checked ? color : 'transparent',
-            borderColor: checked ? color : '#D1D5DB',
           },
-          animatedStyle,
+          containerStyle,
         ]}
       >
-        {checked && (
+        <Animated.View style={checkStyle}>
           <MaterialCommunityIcons name="check" size={size * 0.6} color="#FFFFFF" />
-        )}
+        </Animated.View>
       </Animated.View>
     </Pressable>
   );
