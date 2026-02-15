@@ -6,6 +6,6 @@ module.exports = {
   deploymentTarget: '17.0',
   frameworks: ['SwiftUI', 'WidgetKit'],
   entitlements: {
-    'com.apple.security.application-groups': ['group.com.habbit.shared'],
+    'com.apple.security.application-groups': ['group.com.habbittracker.shared'],
   },
 };

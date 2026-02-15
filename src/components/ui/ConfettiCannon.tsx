@@ -5,15 +5,15 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
-  withSequence,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const CONFETTI_COLORS = ['#FF6B47', '#FFD700', '#2ECC71', '#3498DB', '#9B59B6', '#FF8C42', '#E91E63', '#00BCD4'];
-const PARTICLE_COUNT = 40;
+// Muted, on-brand palette — coral tones + gold
+const CONFETTI_COLORS = ['#FF6B47', '#FFB09A', '#FFD700', '#FFD4C4', '#FF8C6B', '#FFA07A'];
+const PARTICLE_COUNT = 18;
 
 interface Particle {
   x: number;
@@ -23,17 +23,19 @@ interface Particle {
   size: number;
   delay: number;
   driftX: number;
+  fallDistance: number;
 }
 
 function generateParticles(): Particle[] {
   return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
-    x: SCREEN_WIDTH * 0.2 + Math.random() * SCREEN_WIDTH * 0.6,
-    y: -20,
+    x: SCREEN_WIDTH * 0.15 + Math.random() * SCREEN_WIDTH * 0.7,
+    y: -10,
     rotation: Math.random() * 360,
     color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-    size: 6 + Math.random() * 6,
-    delay: Math.random() * 400,
-    driftX: (Math.random() - 0.5) * 120,
+    size: 4 + Math.random() * 4,
+    delay: Math.random() * 300,
+    driftX: (Math.random() - 0.5) * 80,
+    fallDistance: 200 + Math.random() * 250,
   }));
 }
 
@@ -41,36 +43,34 @@ function ConfettiPiece({ particle }: { particle: Particle }) {
   const translateY = useSharedValue(0);
   const translateX = useSharedValue(0);
   const rotate = useSharedValue(0);
-  const opacity = useSharedValue(1);
-  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
 
   useEffect(() => {
-    scale.value = withDelay(
+    // Fade in gently
+    opacity.value = withDelay(
       particle.delay,
-      withSequence(
-        withTiming(1, { duration: 100 }),
-        withTiming(1, { duration: 1200 }),
-        withTiming(0, { duration: 300 }),
-      )
+      withTiming(0.8, { duration: 150 })
     );
+    // Gentle fall
     translateY.value = withDelay(
       particle.delay,
-      withTiming(SCREEN_HEIGHT * 0.7 + Math.random() * 200, {
-        duration: 1600,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      withTiming(particle.fallDistance, {
+        duration: 1400,
+        easing: Easing.out(Easing.quad),
       })
     );
     translateX.value = withDelay(
       particle.delay,
-      withTiming(particle.driftX, { duration: 1600, easing: Easing.out(Easing.quad) })
+      withTiming(particle.driftX, { duration: 1400, easing: Easing.out(Easing.quad) })
     );
     rotate.value = withDelay(
       particle.delay,
-      withTiming(particle.rotation + 360 + Math.random() * 360, { duration: 1600 })
+      withTiming(particle.rotation + 180, { duration: 1400 })
     );
+    // Fade out
     opacity.value = withDelay(
-      particle.delay + 1200,
-      withTiming(0, { duration: 400 })
+      particle.delay + 900,
+      withTiming(0, { duration: 500 })
     );
   }, []);
 
@@ -79,15 +79,14 @@ function ConfettiPiece({ particle }: { particle: Particle }) {
     left: particle.x,
     top: particle.y,
     width: particle.size,
-    height: particle.size * 0.6,
-    borderRadius: 2,
+    height: particle.size * 0.5,
+    borderRadius: particle.size / 4,
     backgroundColor: particle.color,
     opacity: opacity.value,
     transform: [
       { translateX: translateX.value },
       { translateY: translateY.value },
       { rotate: `${rotate.value}deg` },
-      { scale: scale.value },
     ],
   }));
 
@@ -106,7 +105,7 @@ export function ConfettiCannon({ active, onComplete }: ConfettiCannonProps) {
     if (active) {
       setParticles(generateParticles());
       if (onComplete) {
-        const timer = setTimeout(() => runOnJS(onComplete)(), 2000);
+        const timer = setTimeout(() => runOnJS(onComplete)(), 1800);
         return () => clearTimeout(timer);
       }
     } else {

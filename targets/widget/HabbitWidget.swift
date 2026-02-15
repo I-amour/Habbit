@@ -15,7 +15,7 @@ struct HabitProgress: Codable {
 // MARK: - Timeline Provider
 
 struct HabbitProvider: TimelineProvider {
-    let appGroup = "group.com.habbit.shared"
+    let appGroup = "group.com.habbittracker.shared"
 
     func placeholder(in context: Context) -> HabbitEntry {
         HabbitEntry(date: Date(), completed: 3, total: 5, streak: 7, habits: ["Meditate", "Read", "Exercise", "Water", "Journal"], done: ["Meditate", "Read", "Exercise"])
@@ -27,7 +27,6 @@ struct HabbitProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<HabbitEntry>) -> Void) {
         let entry = getEntry()
-        // Refresh every 15 minutes
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
@@ -76,7 +75,6 @@ struct HabbitWidgetSmall: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            // Progress ring
             ZStack {
                 Circle()
                     .stroke(coral.opacity(0.2), lineWidth: 6)
@@ -124,7 +122,6 @@ struct HabbitWidgetMedium: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            // Left: progress ring
             ZStack {
                 Circle()
                     .stroke(coral.opacity(0.2), lineWidth: 7)
@@ -144,7 +141,6 @@ struct HabbitWidgetMedium: View {
             }
             .frame(width: 72, height: 72)
 
-            // Right: habit list
             VStack(alignment: .leading, spacing: 4) {
                 Text("Today's Habits")
                     .font(.system(size: 12, weight: .bold))
@@ -187,17 +183,26 @@ struct HabbitWidgetMedium: View {
 
 // MARK: - Widget Configuration
 
+struct HabbitWidgetEntryView: View {
+    @Environment(\.widgetFamily) var family
+    let entry: HabbitEntry
+
+    var body: some View {
+        switch family {
+        case .systemMedium:
+            HabbitWidgetMedium(entry: entry)
+        default:
+            HabbitWidgetSmall(entry: entry)
+        }
+    }
+}
+
 struct HabbitWidget: Widget {
     let kind: String = "HabbitWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: HabbitProvider()) { entry in
-            if #available(iOS 17.0, *) {
-                switch WidgetFamily.systemSmall {
-                default:
-                    HabbitWidgetSmall(entry: entry)
-                }
-            }
+            HabbitWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Habbit Progress")
         .description("See your daily habit progress at a glance.")

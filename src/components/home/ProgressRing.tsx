@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import Animated, { useAnimatedProps, useAnimatedStyle, useSharedValue, withSpring, withRepeat, withTiming, withDelay } from 'react-native-reanimated';
+import Animated, { useAnimatedProps, useAnimatedStyle, useSharedValue, withSpring, withTiming, withDelay, withSequence } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -24,10 +24,10 @@ export function ProgressRing({ completed, total, size = 80, strokeWidth = 8 }: P
 
   useEffect(() => {
     if (isPerfect) {
-      pulseScale.value = withDelay(300, withRepeat(
-        withTiming(1.08, { duration: 800 }),
-        -1,
-        true
+      // Single gentle pop then settle — not infinite pulsing
+      pulseScale.value = withDelay(200, withSequence(
+        withSpring(1.06, { damping: 8, stiffness: 150 }),
+        withSpring(1, { damping: 12, stiffness: 120 }),
       ));
     } else {
       pulseScale.value = withTiming(1, { duration: 200 });

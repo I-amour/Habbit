@@ -18,8 +18,7 @@
       "bundleIdentifier": "com.habbittracker.app",
       "entitlements": {
         "com.apple.security.application-groups": [
-          "group.com.habbittracker.app.shared",
-          "group.com.habbit.shared"
+          "group.com.habbittracker.shared"
         ]
       },
       "infoPlist": {
@@ -52,7 +51,7 @@
             "ios": {
               "appExtensions": [
                 {
-                  "bundleIdentifier": "com.habbit.app.widget",
+                  "bundleIdentifier": "com.habbittracker.app.widget",
                   "targetName": "HabbitWidget",
                   "entitlements": {
                     "com.apple.security.application-groups": [
