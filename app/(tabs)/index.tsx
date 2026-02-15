@@ -73,7 +73,7 @@ export default function HomeScreen() {
       setSkippedHabits(newSkipped);
     }
     loadStreaksAndSkips();
-  }, [todaysHabits, todayCompletions]);
+  }, [todaysHabits]);
 
   // Sync widget data whenever completions change
   useEffect(() => {
@@ -130,24 +130,32 @@ export default function HomeScreen() {
     }
   }, [skippedHabits]);
 
+  // Use refs so renderHabit stays stable and doesn't cause DraggableFlatList to re-render all items
+  const todayCompletionsRef = useRef(todayCompletions);
+  todayCompletionsRef.current = todayCompletions;
+  const streaksRef = useRef(streaks);
+  streaksRef.current = streaks;
+  const skippedHabitsRef = useRef(skippedHabits);
+  skippedHabitsRef.current = skippedHabits;
+
   const renderHabit = useCallback(({ item, drag, isActive }: RenderItemParams<Habit>) => (
     <ScaleDecorator>
       <HabitCard
         habit={item}
-        completion={todayCompletions.get(item.id)}
-        streak={streaks[item.id] || 0}
+        completion={todayCompletionsRef.current.get(item.id)}
+        streak={streaksRef.current[item.id] || 0}
         onToggle={() => toggleCompletion(item)}
         onQuantityChange={(value) => updateQuantity(item, value)}
         onAddNote={(note) => addNote(item.id, note)}
         onSkipDay={() => handleSkipDay(item)}
-        isSkipped={skippedHabits.has(item.id)}
+        isSkipped={skippedHabitsRef.current.has(item.id)}
         onArchive={() => handleArchive(item)}
         onDelete={() => handleDelete(item)}
         onDrag={drag}
         isDragging={isActive}
       />
     </ScaleDecorator>
-  ), [todayCompletions, streaks, skippedHabits, toggleCompletion, updateQuantity, addNote, handleSkipDay, handleArchive, handleDelete]);
+  ), [toggleCompletion, updateQuantity, addNote, handleSkipDay, handleArchive, handleDelete]);
 
   const handleDragEnd = useCallback(({ data }: { data: Habit[] }) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -163,6 +171,7 @@ export default function HomeScreen() {
         data={todaysHabits}
         renderItem={renderHabit}
         keyExtractor={item => item.id}
+        extraData={[todayCompletions, streaks, skippedHabits]}
         onDragEnd={handleDragEnd}
         onDragBegin={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
         ListHeaderComponent={

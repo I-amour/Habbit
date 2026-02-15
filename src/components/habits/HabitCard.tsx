@@ -31,7 +31,7 @@ const FREQUENCY_SHORT: Record<string, string> = {
   [Frequency.X_TIMES_PER_WEEK]: 'Weekly',
 };
 
-export function HabitCard({ habit, completion, streak, onToggle, onQuantityChange, onAddNote, onSkipDay, isSkipped, onArchive, onDelete, onDrag, isDragging }: HabitCardProps) {
+export const HabitCard = React.memo(function HabitCard({ habit, completion, streak, onToggle, onQuantityChange, onAddNote, onSkipDay, isSkipped, onArchive, onDelete, onDrag, isDragging }: HabitCardProps) {
   const theme = useTheme();
   const isCompleted = habit.type === HabitType.BOOLEAN
     ? !!completion
@@ -250,7 +250,7 @@ export function HabitCard({ habit, completion, streak, onToggle, onQuantityChang
       </Pressable>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
