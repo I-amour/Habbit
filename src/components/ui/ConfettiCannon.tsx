@@ -11,9 +11,8 @@ import Animated, {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Muted, on-brand palette — coral tones + gold
-const CONFETTI_COLORS = ['#FF6B47', '#FFB09A', '#FFD700', '#FFD4C4', '#FF8C6B', '#FFA07A'];
-const PARTICLE_COUNT = 18;
+const CONFETTI_COLORS = ['#FF6B47', '#FFB09A', '#FFD700', '#2ECC71', '#FF8C6B', '#FFA07A'];
+const PARTICLE_COUNT = 24;
 
 interface Particle {
   x: number;
@@ -28,14 +27,14 @@ interface Particle {
 
 function generateParticles(): Particle[] {
   return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
-    x: SCREEN_WIDTH * 0.15 + Math.random() * SCREEN_WIDTH * 0.7,
+    x: SCREEN_WIDTH * 0.1 + Math.random() * SCREEN_WIDTH * 0.8,
     y: -10,
     rotation: Math.random() * 360,
     color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-    size: 4 + Math.random() * 4,
-    delay: Math.random() * 300,
-    driftX: (Math.random() - 0.5) * 80,
-    fallDistance: 200 + Math.random() * 250,
+    size: 5 + Math.random() * 5,
+    delay: Math.random() * 350,
+    driftX: (Math.random() - 0.5) * 100,
+    fallDistance: 250 + Math.random() * 300,
   }));
 }
 
@@ -46,30 +45,27 @@ function ConfettiPiece({ particle }: { particle: Particle }) {
   const opacity = useSharedValue(0);
 
   useEffect(() => {
-    // Fade in gently
     opacity.value = withDelay(
       particle.delay,
-      withTiming(0.8, { duration: 150 })
+      withTiming(0.9, { duration: 120 })
     );
-    // Gentle fall
     translateY.value = withDelay(
       particle.delay,
       withTiming(particle.fallDistance, {
-        duration: 1400,
+        duration: 1500,
         easing: Easing.out(Easing.quad),
       })
     );
     translateX.value = withDelay(
       particle.delay,
-      withTiming(particle.driftX, { duration: 1400, easing: Easing.out(Easing.quad) })
+      withTiming(particle.driftX, { duration: 1500, easing: Easing.out(Easing.quad) })
     );
     rotate.value = withDelay(
       particle.delay,
-      withTiming(particle.rotation + 180, { duration: 1400 })
+      withTiming(particle.rotation + 240, { duration: 1500 })
     );
-    // Fade out
     opacity.value = withDelay(
-      particle.delay + 900,
+      particle.delay + 1000,
       withTiming(0, { duration: 500 })
     );
   }, []);
@@ -79,7 +75,7 @@ function ConfettiPiece({ particle }: { particle: Particle }) {
     left: particle.x,
     top: particle.y,
     width: particle.size,
-    height: particle.size * 0.5,
+    height: particle.size * 0.55,
     borderRadius: particle.size / 4,
     backgroundColor: particle.color,
     opacity: opacity.value,
@@ -105,7 +101,7 @@ export function ConfettiCannon({ active, onComplete }: ConfettiCannonProps) {
     if (active) {
       setParticles(generateParticles());
       if (onComplete) {
-        const timer = setTimeout(() => runOnJS(onComplete)(), 1800);
+        const timer = setTimeout(() => runOnJS(onComplete)(), 2000);
         return () => clearTimeout(timer);
       }
     } else {

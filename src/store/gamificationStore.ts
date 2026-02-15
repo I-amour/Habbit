@@ -16,6 +16,7 @@ interface GamificationState {
   loadProfile: () => Promise<void>;
   loadBadges: () => Promise<void>;
   awardXP: (amount: number) => Promise<void>;
+  deductCompletion: (amount: number) => Promise<void>;
   checkAndUnlockBadges: () => Promise<void>;
   setLongestStreak: (streak: number) => void;
   dismissBadgeModal: () => void;
@@ -82,6 +83,31 @@ export const useGamificationStore = create<GamificationState>((set, get) => ({
         level: newLevel,
         totalCompletions,
         weeklyCompletions: profile.weeklyCompletions + 1,
+      },
+    });
+  },
+
+  deductCompletion: async (amount: number) => {
+    const { profile } = get();
+    const newXP = Math.max(0, profile.totalXP - amount);
+    const newLevel = getLevelForXP(newXP);
+    const totalCompletions = Math.max(0, profile.totalCompletions - 1);
+    const weeklyCompletions = Math.max(0, profile.weeklyCompletions - 1);
+
+    await badgeRepo.updateUserProfile({
+      totalXP: newXP,
+      level: newLevel,
+      totalCompletions,
+      weeklyCompletions,
+    });
+
+    set({
+      profile: {
+        ...profile,
+        totalXP: newXP,
+        level: newLevel,
+        totalCompletions,
+        weeklyCompletions,
       },
     });
   },

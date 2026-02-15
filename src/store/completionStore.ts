@@ -6,6 +6,7 @@ import { getTodayString } from '../utils/dates';
 import { calculateStreak } from '../utils/streaks';
 import { calculateCompletionXP } from '../utils/xp';
 import { useGamificationStore } from './gamificationStore';
+import { cancelHabitReminder, scheduleHabitReminder, scheduleIntervalReminders } from '../utils/notifications';
 
 interface CompletionState {
   todayCompletions: Map<string, Completion>;
@@ -46,6 +47,18 @@ export const useCompletionStore = create<CompletionState>((set, get) => ({
           newMap.delete(habit.id);
           return { todayCompletions: newMap };
         });
+
+        // Deduct XP and completion count since habit was unchecked
+        useGamificationStore.getState().deductCompletion(10).catch(() => {});
+
+        // Reschedule reminder since habit is no longer completed
+        if (habit.reminderTime) {
+          if (habit.reminderIntervalMinutes) {
+            scheduleIntervalReminders(habit).catch(() => {});
+          } else {
+            scheduleHabitReminder(habit).catch(() => {});
+          }
+        }
       } else {
         const completion = await completionRepo.recordCompletion(habit.id, today, 1);
         set(state => {
@@ -53,6 +66,9 @@ export const useCompletionStore = create<CompletionState>((set, get) => ({
           newMap.set(habit.id, completion);
           return { todayCompletions: newMap };
         });
+
+        // Cancel today's remaining reminders since habit is done
+        cancelHabitReminder(habit.id).catch(() => {});
 
         // Update streaks and XP in background (don't block UI)
         updateStreakAndXP(habit).catch(console.warn);

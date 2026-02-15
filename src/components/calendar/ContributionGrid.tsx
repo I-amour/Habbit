@@ -19,11 +19,11 @@ export function ContributionGrid({ onDayPress, weeks = 16 }: ContributionGridPro
   const [dayCounts, setDayCounts] = useState<Record<string, number>>({});
   const totalHabits = habits.length || 1;
 
-  const screenWidth = Dimensions.get('window').width - 40; // minus padding
+  const screenWidth = Dimensions.get('window').width - 48; // minus padding + safety buffer
   const labelWidth = 20;
   const availableWidth = screenWidth - labelWidth;
-  const cellSize = Math.floor(availableWidth / weeks) - 3;
   const cellGap = 3;
+  const cellSize = Math.floor((availableWidth - cellGap * (weeks - 1)) / weeks);
   const totalDays = weeks * 7;
 
   useEffect(() => {
@@ -152,6 +152,7 @@ const styles = StyleSheet.create({
   },
   gridRow: {
     flexDirection: 'row',
+    overflow: 'hidden',
   },
   dayLabels: {
     width: 20,

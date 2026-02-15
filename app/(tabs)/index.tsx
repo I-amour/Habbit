@@ -12,8 +12,7 @@ import { HabitCard } from '../../src/components/habits/HabitCard';
 import { ProgressRing } from '../../src/components/home/ProgressRing';
 import { DailyGreeting } from '../../src/components/home/DailyGreeting';
 import { MotivationalNudge } from '../../src/components/home/MotivationalNudge';
-import { PerfectDayBanner } from '../../src/components/home/PerfectDayBanner';
-import { ConfettiCannon } from '../../src/components/ui/ConfettiCannon';
+import { PerfectDayModal } from '../../src/components/home/PerfectDayBanner';
 import { EmptyState } from '../../src/components/ui/EmptyState';
 import { Habit, HabitType } from '../../src/models/types';
 import { getStreakRecord } from '../../src/db/badgeRepository';
@@ -41,7 +40,7 @@ export default function HomeScreen() {
 
   const [streaks, setStreaks] = useState<Record<string, number>>({});
   const [skippedHabits, setSkippedHabits] = useState<Set<string>>(new Set());
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [showPerfectDay, setShowPerfectDay] = useState(false);
   const prevCompletedRef = useRef(0);
 
   const todaysHabits = useMemo(() => getTodaysHabits(), [habits]);
@@ -95,10 +94,10 @@ export default function HomeScreen() {
   const bestStreak = Math.max(0, ...Object.values(streaks));
   const isPerfectDay = todaysHabits.length > 0 && completedCount === todaysHabits.length;
 
-  // Trigger confetti when all habits are completed
+  // Show perfect day modal when all habits are completed
   useEffect(() => {
     if (isPerfectDay && prevCompletedRef.current < todaysHabits.length) {
-      setShowConfetti(true);
+      setShowPerfectDay(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     prevCompletedRef.current = completedCount;
@@ -187,7 +186,6 @@ export default function HomeScreen() {
                 />
               </View>
             )}
-            <PerfectDayBanner visible={isPerfectDay} />
           </View>
         }
         ListEmptyComponent={
@@ -209,8 +207,13 @@ export default function HomeScreen() {
         <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
       </Pressable>
 
-      {/* Confetti on perfect day */}
-      <ConfettiCannon active={showConfetti} onComplete={() => setShowConfetti(false)} />
+      {/* Perfect day celebration modal */}
+      <PerfectDayModal
+        visible={showPerfectDay}
+        onDismiss={() => setShowPerfectDay(false)}
+        completedCount={completedCount}
+        bestStreak={bestStreak}
+      />
 
       {/* Badge unlock modal */}
       {newlyUnlockedBadge && (

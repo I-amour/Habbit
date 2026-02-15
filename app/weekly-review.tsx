@@ -88,13 +88,11 @@ export default function WeeklyReviewScreen() {
     ? Math.round((habitData.reduce((sum, h) => sum + h.completedDays, 0) / habitData.reduce((sum, h) => sum + h.totalDays, 0)) * 100)
     : 0;
 
-  if (isLoading) return null;
-
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <Animated.View entering={FadeInDown.duration(300)} style={styles.header}>
+        {/* Header - always visible immediately */}
+        <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text} />
           </Pressable>
@@ -105,8 +103,12 @@ export default function WeeklyReviewScreen() {
             </Text>
           </View>
           <View style={{ width: 24 }} />
-        </Animated.View>
+        </View>
 
+        {isLoading ? (
+          <View style={styles.loadingPlaceholder} />
+        ) : (
+        <>
         {/* Summary cards */}
         <Animated.View entering={FadeInDown.delay(100).duration(300)} style={styles.summaryGrid}>
           <View style={[styles.summaryCard, { backgroundColor: theme.surface }]}>
@@ -254,6 +256,8 @@ export default function WeeklyReviewScreen() {
         </Animated.View>
 
         <View style={{ height: 40 }} />
+        </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -352,5 +356,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  loadingPlaceholder: {
+    height: 200,
   },
 });

@@ -1,49 +1,107 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
+import { ConfettiCannon } from '../ui/ConfettiCannon';
 
-interface PerfectDayBannerProps {
+interface PerfectDayModalProps {
   visible: boolean;
+  onDismiss: () => void;
+  completedCount: number;
+  bestStreak: number;
 }
 
-export function PerfectDayBanner({ visible }: PerfectDayBannerProps) {
+export function PerfectDayModal({ visible, onDismiss, completedCount, bestStreak }: PerfectDayModalProps) {
   const theme = useTheme();
 
   if (!visible) return null;
 
   return (
-    <Animated.View
-      entering={FadeIn.duration(400).delay(200)}
-      exiting={FadeOut.duration(300)}
-      style={[styles.container, { backgroundColor: theme.success + '14', borderColor: theme.success + '30' }]}
-    >
-      <View style={styles.row}>
-        <MaterialCommunityIcons name="check-circle" size={18} color={theme.success} />
-        <Text style={[styles.text, { color: theme.success }]}>All done for today!</Text>
-      </View>
-    </Animated.View>
+    <Modal transparent animationType="fade" onRequestClose={onDismiss}>
+      <Pressable style={styles.overlay} onPress={onDismiss}>
+        <ConfettiCannon active={true} />
+        <Animated.View
+          entering={ZoomIn.springify().damping(14)}
+          style={[styles.modal, { backgroundColor: theme.surface }]}
+        >
+          <Animated.View entering={FadeIn.delay(200)} style={styles.iconContainer}>
+            <View style={[styles.iconCircle, { backgroundColor: theme.success + '20' }]}>
+              <MaterialCommunityIcons name="check-decagram" size={48} color={theme.success} />
+            </View>
+          </Animated.View>
+
+          <Text style={[styles.congrats, { color: theme.success }]}>Perfect Day!</Text>
+          <Text style={[styles.subtitle, { color: theme.text }]}>
+            All {completedCount} habits completed
+          </Text>
+          <Text style={[styles.description, { color: theme.textSecondary }]}>
+            {bestStreak >= 7
+              ? `You're on a ${bestStreak}-day streak. Keep it going!`
+              : 'Great job staying consistent today!'}
+          </Text>
+
+          <Pressable
+            onPress={onDismiss}
+            style={[styles.button, { backgroundColor: theme.success }]}
+          >
+            <Text style={styles.buttonText}>Nice!</Text>
+          </Pressable>
+        </Animated.View>
+      </Pressable>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: 20,
-    marginBottom: 8,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center',
-    borderWidth: 1,
+    justifyContent: 'center',
+    padding: 40,
   },
-  row: {
-    flexDirection: 'row',
+  modal: {
+    width: '100%',
+    borderRadius: 24,
+    padding: 32,
     alignItems: 'center',
-    gap: 8,
   },
-  text: {
-    fontSize: 15,
-    fontWeight: '600',
+  iconContainer: {
+    marginBottom: 20,
+  },
+  iconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  congrats: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  subtitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+  description: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  button: {
+    marginTop: 24,
+    paddingHorizontal: 48,
+    paddingVertical: 14,
+    borderRadius: 25,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
