@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,6 +11,7 @@ import { useSettingsStore } from '../src/store/settingsStore';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [isAppReady, setIsAppReady] = useState(false);
   const loadHabits = useHabitStore(s => s.loadHabits);
   const loadCompletions = useCompletionStore(s => s.loadTodayCompletions);
   const loadProfile = useGamificationStore(s => s.loadProfile);
@@ -29,15 +30,16 @@ export default function RootLayout() {
         loadSettings(),
       ]);
       await SplashScreen.hideAsync();
+      setIsAppReady(true);
     }
     init();
   }, []);
 
   useEffect(() => {
-    if (!isSettingsLoading && !hasCompletedOnboarding) {
+    if (isAppReady && !isSettingsLoading && !hasCompletedOnboarding) {
       router.replace('/onboarding');
     }
-  }, [isSettingsLoading, hasCompletedOnboarding]);
+  }, [isAppReady, isSettingsLoading, hasCompletedOnboarding]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
